@@ -15,6 +15,6 @@ class MyApp extends StatelessWidget {
       title: 'História App',
       debugShowCheckedModeBanner: false,
       home: const TelaInicial(),
-    );
+    ); 
   }
 }

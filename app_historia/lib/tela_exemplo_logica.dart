@@ -6,7 +6,6 @@ class TelaExemploLogica extends StatefulWidget {
   @override
   State<TelaExemploLogica> createState() => _TelaExemploLogicaState();
 }
-
 class _TelaExemploLogicaState extends State<TelaExemploLogica> {
   final TextEditingController _controller = TextEditingController();
   String resultado = "";

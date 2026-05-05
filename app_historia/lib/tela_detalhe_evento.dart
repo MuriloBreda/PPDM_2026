@@ -16,6 +16,7 @@ class TelaDetalheEvento extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(titulo)),
+      backgroundColor: const Color(0xFFF5F7FA),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -26,7 +27,7 @@ class TelaDetalheEvento extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.indigo,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 10),

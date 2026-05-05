@@ -13,7 +13,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
 
   final List<Map<String, Object>> perguntas = [
     {
-      'pergunta': 'O que aconteceu em 4000 a.C.?',
+      'pergunta': 'O que aconteceu em 4000 a.C.? 🤔',
       'respostas': [
         {'texto': 'Fundação de Roma', 'correta': false},
         {'texto': 'Revolução Industrial', 'correta': false},
@@ -21,7 +21,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'Qual evento ocorreu em 753 a.C.?',
+      'pergunta': 'Qual evento ocorreu em 753 a.C.?🤔',
       'respostas': [
         {'texto': 'Queda de Roma', 'correta': false},
         {'texto': 'Fundação de Roma', 'correta': true},
@@ -29,7 +29,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'O que marcou o ano de 476?',
+      'pergunta': 'O que marcou o ano de 476?🤔',
       'respostas': [
         {'texto': 'Queda de Roma', 'correta': true},
         {'texto': 'Revolução Francesa', 'correta': false},
@@ -37,7 +37,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'O que foram as Cruzadas (1095)?',
+      'pergunta': 'O que foram as Cruzadas (1095)?🤔',
       'respostas': [
         {'texto': 'Revolução política', 'correta': false},
         {'texto': 'Descoberta científica', 'correta': false},
@@ -45,25 +45,23 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'O que aconteceu em 1453?',
+      'pergunta': 'O que aconteceu em 1453?🤔',
       'respostas': [
-        
         {'texto': 'Homem na Lua', 'correta': false},
         {'texto': 'Queda de Constantinopla', 'correta': true},
         {'texto': 'Criação da Web', 'correta': false},
       ],
     },
     {
-      'pergunta': 'Quem chegou à América em 1492?',
+      'pergunta': 'Quem chegou à América em 1492?🤔',
       'respostas': [
-        
         {'texto': 'Napoleão', 'correta': false},
         {'texto': 'Cristóvão Colombo', 'correta': true},
         {'texto': 'Einstein', 'correta': false},
       ],
     },
     {
-      'pergunta': 'O que marcou 1760?',
+      'pergunta': 'O que marcou 1760?🤔',
       'respostas': [
         {'texto': 'Segunda Guerra', 'correta': false},
         {'texto': 'Queda do Muro', 'correta': false},
@@ -71,7 +69,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'O que ocorreu em 1789?',
+      'pergunta': 'O que ocorreu em 1789?🤔',
       'respostas': [
         {'texto': 'Primeira Guerra', 'correta': false},
         {'texto': 'Revolução Francesa', 'correta': true},
@@ -79,7 +77,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'Quando começou a Primeira Guerra Mundial?',
+      'pergunta': 'Quando começou a Primeira Guerra Mundial?🤔',
       'respostas': [
         {'texto': '1914', 'correta': true},
         {'texto': '1939', 'correta': false},
@@ -87,7 +85,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'Quando começou a Segunda Guerra Mundial?',
+      'pergunta': 'Quando começou a Segunda Guerra Mundial?🤔',
       'respostas': [
         {'texto': '1939', 'correta': true},
         {'texto': '1914', 'correta': false},
@@ -95,25 +93,23 @@ class _QuizHistoriaState extends State<QuizHistoria> {
       ],
     },
     {
-      'pergunta': 'O que aconteceu em 1969?',
+      'pergunta': 'O que aconteceu em 1969?🤔',
       'respostas': [
-        
         {'texto': 'Queda de Roma', 'correta': false},
         {'texto': 'Homem na Lua', 'correta': true},
         {'texto': 'Cruzadas', 'correta': false},
       ],
     },
     {
-      'pergunta': 'O que marcou 1989?',
+      'pergunta': 'O que marcou 1989?🤔',
       'respostas': [
-        
         {'texto': 'Revolução Industrial', 'correta': false},
         {'texto': 'Descoberta da América', 'correta': false},
         {'texto': 'Queda do Muro de Berlim', 'correta': true},
       ],
     },
     {
-      'pergunta': 'O que aconteceu em 1991?',
+      'pergunta': 'O que aconteceu em 1991?🤔',
       'respostas': [
         {'texto': 'Criação da Web', 'correta': true},
         {'texto': 'Primeira Guerra', 'correta': false},
@@ -138,7 +134,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context){
     bool terminou = perguntaAtual >= perguntas.length;
 
     return Scaffold(
@@ -185,7 +181,7 @@ class _QuizHistoriaState extends State<QuizHistoria> {
                         child: Text(resposta['texto'] as String),
                       ),
                     );
-                  }).toList()
+                  }).toList(),
                 ],
               ),
       ),

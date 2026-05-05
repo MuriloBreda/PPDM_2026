@@ -4,17 +4,21 @@ class TelaConteudo extends StatelessWidget {
   final String titulo;
   final String descricao;
   final String descricaoCompleta;
-
-  const TelaConteudo({super.key, required this.titulo, required this.descricao, required this.descricaoCompleta});
+  final String link;
+  const TelaConteudo({
+    super.key,
+    required this.titulo,
+    required this.descricao,
+    required this.descricaoCompleta,
+    required this.link,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-
       appBar: AppBar(
-        title: Text(titulo, 
-        style: TextStyle(color: Colors.white)),
+        title: Text(titulo, style: TextStyle(color: Colors.white)),
         centerTitle: true,
         backgroundColor: Colors.brown,
         elevation: 0,
@@ -25,7 +29,6 @@ class TelaConteudo extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// HEADER
             Container(
               width: double.infinity,
@@ -65,13 +68,9 @@ class TelaConteudo extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   const Text(
                     "Descrição",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 10),
@@ -82,7 +81,44 @@ class TelaConteudo extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 20),
-                  
+                ],
+              ),
+            ),
+
+            // container imagem
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: const Text(
+                      "Imagem",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Image.network(
+                      link,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -93,7 +129,6 @@ class TelaConteudo extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.brown,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -104,7 +139,10 @@ class TelaConteudo extends StatelessWidget {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                label: Text("Voltar", style: TextStyle(fontSize: 16, color: Colors.white)),
+                label: Text(
+                  "Voltar",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
             ),
           ],

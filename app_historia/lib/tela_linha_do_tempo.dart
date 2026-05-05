@@ -94,37 +94,6 @@ class TelaLinhaDoTempo extends StatelessWidget {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              /// LINHA + BOLINHA
-              Column(
-                children: [
-                  Container(
-                    width: 2,
-                    height: 20,
-                    color: index == 0
-                        ? Colors.transparent
-                        : Colors.brown[400],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.brown,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.circle, size: 8, color: Colors.white),
-                  ),
-                  Container(
-                    width: 2,
-                    height: 80,
-                    color: index == eventos.length - 1
-                        ? Colors.transparent
-                        : Colors.brown[400]
-                  ),
-                ],
-              ),
-
-              const SizedBox(width: 12),
-
               /// CARD DO EVENTO
               Expanded(
                 child: Container(
