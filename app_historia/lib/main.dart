@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'tela_inicial.dart';
+import 'quiz_prehistoria.dart';
 
 void main() {
   runApp(const MyApp());
