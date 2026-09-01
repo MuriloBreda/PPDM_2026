@@ -19,6 +19,13 @@ class _CadastroModelosPageState extends State<CadastroModelosPage> {
   bool ativo = true;
   bool salvando = false;
 
+  final categorias = [
+    'HATCH',
+    'SEDAN',
+    'SUV',
+    'PICKUP',
+  ];
+
   Future<void> salvar() async{
     if(!formKey.currentState!.validate()){
       return;
@@ -38,7 +45,35 @@ class _CadastroModelosPageState extends State<CadastroModelosPage> {
     // tenta enviar os dados para API
     try{
       // fazer uma requisição HTTP para API
-      final response = await http.post()
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:8000/api/modelos'),
+        headers: {
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(dadosModelo)
+      );
+
+      // converte a resposta da API para JSON
+      final resultado = response.body.isNotEmpty ? jsonDecode(response.body) : <String, dynamic>{};
+
+      // verifica se o cadastro foi realizado com sucesso
+      if(response.statusCode == 201){
+        // mensagem de sucesso para o usuário
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Modelo cadastrado com sucesso!'),
+            backgroundColor: Colors.green,
+          )
+        );
+      }else{
+        // caso a API retorne um erro, exibe a mensagem de erro
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro $response.statusCode}: $response.body}'),
+            backgroundColor: Colors.red,
+          )
+        );
+      }
 
     } catch (e) {
       // mensagem de erro
@@ -134,7 +169,7 @@ class _CadastroModelosPageState extends State<CadastroModelosPage> {
                         prefixIcon: Icon(Icons.category_outlined),
                         border: OutlineInputBorder(),
                       ),
-                      items: categoria.map((item) {
+                      items: categorias.map((item) {
                         return DropdownMenuItem(
                           value: item,
                           child: Text(item),

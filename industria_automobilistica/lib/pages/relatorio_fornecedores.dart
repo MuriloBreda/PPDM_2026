@@ -39,7 +39,7 @@ class _RelatorioFornecedoresPageState extends State<RelatorioFornecedoresPage> {
       // Faz uma requisição HTTP do tipo GET para API.
       final response = await http.get(
         // Converte o endereço da API para um objeto URI;
-        Uri.parse('http://127.0.0.1:8000/api/modelos'),
+        Uri.parse('http://127.0.0.1:8000/api/fornecedores'),
 
         // Informa à API que o aplicativo espera receber a resposta em JSON
         headers: {
