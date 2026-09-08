@@ -77,6 +77,38 @@ class _RelatorioModelosPageState extends State<RelatorioModelosPage> {
     }
   }
 
+  // Função q faz requisição assincrona para API mandando o DELETE
+  Future<void> excluirModelo(dynamic idModelo) async{
+    try{
+      final response = await http.delete(
+        Uri.parse('http://127.0.0.1:8000/api/modelos/$idModelo'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      );
+
+      final resultado = response.body.isNotEmpty ? jsonDecode(response.body) : null;
+
+      if(response.statusCode == 200){
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Modelo excluído com sucesso!')),
+        );
+
+        await consultaModelos();
+      }else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao excluir modelo: ${resultado?['message'] ?? 'Erro desconhecido'}')),
+        );
+      }
+
+    }catch(e){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao acessar a API: $e')),
+      );
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -147,6 +179,12 @@ class _RelatorioModelosPageState extends State<RelatorioModelosPage> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
+                DataColumn(
+                  label: Text(
+                    'Ações',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
               rows: modelos.map<DataRow>((modelo){
                 final ativo = modelo['ATIVO'].toString();
@@ -165,9 +203,56 @@ class _RelatorioModelosPageState extends State<RelatorioModelosPage> {
                     DataCell(
                       Text(ativo == '1' ? 'Sim' : 'Não'),
                     ),
+                    DataCell(
+                      Row(children: [
+                        IconButton(
+                          onPressed: () {
+                            final id = modelo['ID'];
+                          },
+                          icon: Icon(Icons.edit)
+                        ),
+                        IconButton(
+                          onPressed: () async {
+                            final id = modelo['ID'];
+
+                            // exibe um dialogo de config antes de excluir o modelo
+                            final confirmacao = await showDialog<bool>(
+                              context:context,
+                              builder: (context){
+                                return AlertDialog(
+                                  title: Text('Excluir modelos'),
+                                  content: Text('Deseja excluir o modelo ${modelo['NOME']}?'),
+                                  actions: [
+                                    // Botão de cancelar que fecha o diálogo e retorna false
+                                    TextButton(
+                                    onPressed: (){
+                                      Navigator.pop(context,false);
+                                    },
+                                    child: Text('Cancelar')
+                                    ),
+                                    // Botão de excluir que fecha o diálogo e retorna true
+                                    TextButton(
+                                    onPressed: (){
+                                      Navigator.pop(context,true);
+                                    },
+                                    child: Text('Excluir')
+                                    ), 
+                                  ],
+                                );
+                               }
+                               );
+
+                               if(confirmacao == true){
+                                await excluirModelo(id);
+                               }
+                            },
+                            icon: Icon(Icons.delete, color: Colors.red))
+                        ],
+                      )
+                    ),
                   ]
                 );
-              }).toList(),
+              }).toList()
             ),
           ),
         ),

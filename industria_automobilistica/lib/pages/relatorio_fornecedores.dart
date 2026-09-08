@@ -77,6 +77,37 @@ class _RelatorioFornecedoresPageState extends State<RelatorioFornecedoresPage> {
     }
   }
 
+  Future<void> excluirFornecedores(dynamic idFornecedor) async{
+    try{
+      final response = await http.delete(
+        Uri.parse('http://127.0.0.1:8000/api/fornecedores/$idFornecedor'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      );
+
+      final resultado = response.body.isNotEmpty ? jsonDecode(response.body) : null;
+
+      if(response.statusCode == 200){
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fornecedor excluído com sucesso!')),
+        );
+
+        await consultaFornecedores();
+      }else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao excluir fornecedor: ${resultado?['message'] ?? 'Erro desconhecido'}')),
+        );
+      }
+
+    }catch(e){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao acessar a API: $e')),
+      );
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -146,6 +177,12 @@ class _RelatorioFornecedoresPageState extends State<RelatorioFornecedoresPage> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
+                DataColumn(
+                  label: Text(
+                    'Ações',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
                
               ],
               rows: fornecedores.map<DataRow>((fornecedor){
@@ -163,9 +200,57 @@ class _RelatorioFornecedoresPageState extends State<RelatorioFornecedoresPage> {
                     DataCell(
                       Text(fornecedor['ESTADO'].toString()),
                     ),
+                    DataCell(
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              // Ação do botão de editar
+                            },
+                            icon: Icon(Icons.edit)
+                          ),
+                          IconButton(
+                          onPressed: () async {
+                            final id = fornecedor['ID'];
+
+                            // exibe um dialogo de config antes de excluir o fornecedor
+                            final confirmacao = await showDialog<bool>(
+                              context:context,
+                              builder: (context){
+                                return AlertDialog(
+                                  title: Text('Excluir Fornecedor'),
+                                  content: Text('Deseja excluir o fornecedor ${fornecedor['NOME']}?'),
+                                  actions: [
+                                    // Botão de cancelar que fecha o diálogo e retorna false
+                                    TextButton(
+                                    onPressed: (){
+                                      Navigator.pop(context,false);
+                                    },
+                                    child: Text('Cancelar')
+                                    ),
+                                    // Botão de excluir que fecha o diálogo e retorna true
+                                    TextButton(
+                                    onPressed: (){
+                                      Navigator.pop(context,true);
+                                    },
+                                    child: Text('Excluir')
+                                    ), 
+                                  ],
+                                );
+                               }
+                               );
+
+                               if(confirmacao == true){
+                                await excluirFornecedores(id);
+                               }
+                            },
+                            icon: Icon(Icons.delete, color: Colors.red))
+                        ],
+                      )
+                    ),
                   ]
                 );
-              }).toList(),
+              }).toList()
             ),
           ),
         ),
