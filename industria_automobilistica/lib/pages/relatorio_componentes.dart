@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:industria_automobilistica/editar_componentes.dart';
 
 class RelatorioComponentesPage extends StatefulWidget {
   const RelatorioComponentesPage({super.key});
@@ -12,12 +13,12 @@ class RelatorioComponentesPage extends StatefulWidget {
 
 class _RelatorioComponentesPageState extends State<RelatorioComponentesPage> {
   final ScrollController horizontalController = ScrollController();
-  
-  // Cria uma lista que armanezará os modelos pela API
-  List<dynamic> componentes = []; 
 
-  // indica se os dados ainda estão sendo carregados.
-  // Começa com true porque a consulta será feita ao abrir a pág
+  // Criar uma lista que armazenará os componentes pela API.
+  List<dynamic> componentes = [];
+
+  // Indica se os dados ainda estão sendo carregados
+  // Começa como true porque a consulta será feita ao abrir a página
   bool carregando = true;
 
   // Armazena um possível erro
@@ -25,115 +26,126 @@ class _RelatorioComponentesPageState extends State<RelatorioComponentesPage> {
 
   @override
   // Função que vai executar ao abrir a tela
-  void initState() {
-    // Configuração para iniciar a tela
+  void initState(){
+    // configuração para iniciar a tela
     super.initState();
 
-    // Chama a função que chgama na API
+    // chama a função que faz a consulta na API
     consultaComponentes();
   }
 
-  // Cria a função que faz a busca na API
+  // Criar a função que faz a busca na API
   Future<void> consultaComponentes() async {
-    try {
-      // Faz uma requisição HTTP do tipo GET para API.
-      final response = await http.get(
-        // Converte o endereço da API para um objeto URI;
-        Uri.parse('http://127.0.0.1:8000/api/componentes'),
+    // Reinicia o estado antes de cada consulta (usado também pelo botão de refresh)
+    setState(() {
+      carregando = true;
+      erro = null;
+    });
 
-        // Informa à API que o aplicativo espera receber a resposta em JSON
+    try{
+      // faz uma requisição HTTP do tipo GET para a API.
+      final response = await http.get(
+        // Converte o endereço da API para um objeto URI.
+      Uri.parse('http://127.0.0.1:8000/api/componentes'),
+
+      // Informa à API que o aplicativo espera receber a resposta em JSON
         headers: {
           'Accept': 'application/json',
         }
       );
 
-      // converte o texto JSON para um objeto Dart.
+      // Converte o texto em JSON para um objeto Dart.
       final resultado = jsonDecode(response.body);
 
       // Verifica se a requisição foi concluída com sucesso.
-      if (response.statusCode == 200) {
-        // Atualiza o estado da tela.
+      if(response.statusCode == 200){
+        // Atualiza o estado da tela com as infirmações
         setState(() {
           // Armazenar os dados retornados pela API
-          // Caso seja nulo, deixo a lista vazia
+          // Caso seja nulo, deixa a lista vazia.
           componentes = resultado['data'] ?? [];
 
           // Parar o loader
           carregando = false;
         });
       } else {
-        // Se API retornar erro, exibir erro na tela
+        // Se a API retornar erro, exibe este erro na tela
+        // Atualiza o estado da página
         setState(() {
           erro = resultado['message'] ?? [];
 
           carregando = false;
         });
       }
-    } catch (e) {
+    }catch(e){
       setState(() {
-        erro = 'Erro: $e';
+        erro =  'Erro: $e';
         carregando = false;
       });
     }
   }
 
-  Future<void> excluirComponente(dynamic idComponente) async{
+  // Função que faz requisição assíncrona para a API mandando o DELETE
+  Future<void> excluirComponente(dynamic idComponente) async {
     try{
       final response = await http.delete(
         Uri.parse('http://127.0.0.1:8000/api/componentes/$idComponente'),
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         }
       );
 
-      final resultado = response.body.isNotEmpty ? jsonDecode(response.body) : null;
+      final resultado = response.body.isNotEmpty ?
+      jsonDecode(response.body) : null;
+
+      if (!mounted) return;
 
       if(response.statusCode == 200){
+        // Exibe uma mensagem mostrando que o registro foi excluido
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Componente excluído com sucesso!')),
-        );
+        SnackBar(content: Text('Componente excluído com sucesso!'))
+      );
 
-        await consultaComponentes();
-      }else{
+      //Atualizar a lista de componentes após a exclusão
+      await consultaComponentes();
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao excluir componente: ${resultado?['message'] ?? 'Erro desconhecido'}')),
-        );
+        SnackBar(content: Text(resultado['message']))
+      );
       }
-
     }catch(e){
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao acessar a API: $e')),
+        SnackBar(content: Text('Erro ao acessar API: $e'))
       );
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Relatório de Componentes'),
-        // Adicionar um botão lateral de atualizção
+        // Adicionar um botão lateral de atualização
         actions: [
           IconButton(
-            onPressed: () {
-              setState(() {
-                carregando = true;
-                erro = null;
-              });
-
-              consultaComponentes();
-            }, 
-            icon: Icon(Icons.refresh)
-          )
+            tooltip: 'Atualizar',
+            // Desabilita o botão enquanto uma consulta já está em andamento
+            onPressed: carregando ? null : consultaComponentes,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
-      body: 
+      body:
+      // Verifica se os dados ainda estão sendo carregados
+      // Se sim, exibe o loader
       carregando
       ? const Center(child: CircularProgressIndicator())
       : erro != null ?
       Center(
         child: Text(erro!, style: TextStyle(color: Colors.red),),
-      ) :
+        ) :
       Padding(
         padding: const EdgeInsets.all(24),
         child: Scrollbar(
@@ -155,7 +167,7 @@ class _RelatorioComponentesPageState extends State<RelatorioComponentesPage> {
               columns: const [
                 DataColumn(
                   label: Text(
-                    'Codigo',
+                    'Código',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -177,71 +189,90 @@ class _RelatorioComponentesPageState extends State<RelatorioComponentesPage> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-               
               ],
-              rows: componentes.map<DataRow>((componete){
+              rows: componentes.map<DataRow>((componente){
                 return DataRow(
                   cells: [
                     DataCell(
-                      Text(componete['CODIGO'].toString()),
+                     Text(componente['CODIGO'].toString()),
                     ),
-                    DataCell(
-                      Text(componete['NOME'].toString()),
-                    ),
-                    DataCell(
-                      Text(componete['ESTOQUE'].toString()),
-                    ),
-                    DataCell(
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              // Ação do botão de editar
-                            },
-                            icon: Icon(Icons.edit)
-                          ),
-                          IconButton(
-                          onPressed: () async {
-                            final id = componete['ID'];
 
-                            // exibe um dialogo de config antes de excluir o componente
-                            final confirmacao = await showDialog<bool>(
-                              context:context,
-                              builder: (context){
-                                return AlertDialog(
-                                  title: Text('Excluir Componente'),
-                                  content: Text('Deseja excluir o componente ${componete['NOME']}?'),
-                                  actions: [
-                                    // Botão de cancelar que fecha o diálogo e retorna false
-                                    TextButton(
-                                    onPressed: (){
-                                      Navigator.pop(context,false);
-                                    },
-                                    child: Text('Cancelar')
-                                    ),
-                                    // Botão de excluir que fecha o diálogo e retorna true
-                                    TextButton(
-                                    onPressed: (){
-                                      Navigator.pop(context,true);
-                                    },
-                                    child: Text('Excluir')
-                                    ), 
-                                  ],
-                                );
-                               }
-                               );
+                    DataCell(
+                     Text(componente['NOME'].toString()),
+                    ),
 
-                               if(confirmacao == true){
-                                await excluirComponente(id);
-                               }
-                            },
-                            icon: Icon(Icons.delete, color: Colors.red))
-                        ],
-                      )
+                    DataCell(
+                     Text(componente['ESTOQUE'].toString()),
+                    ),
+
+                    // Nova célula para ações
+                    DataCell(
+                     Row(
+                      children: [
+                        IconButton(
+                        onPressed: () async {
+                          final atualizado = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) =>
+                              EditarComponentePage(componente:
+                              Map<String, dynamic>.from(componente))
+                            )
+                          );
+
+                          if(atualizado == true){
+                            await consultaComponentes();
+                          }
+                        },
+                        icon: Icon(Icons.edit,
+                        color: Colors.lightBlue.shade900,
+                        )
+                        ),
+                        IconButton(
+                        onPressed: () async {
+                          // Capturar id do registro para fazer DELETE no banco
+                          final id = componente['ID'];
+
+                          // Exibe um diálogo de confirmação antes de excluir
+                          final confirmacao = await showDialog<bool>(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text('Excluir componente'),
+                                content: Text('Deseja excluir o componente ${componente['NOME']}?'),
+                                actions: [
+                                  // Botão de cancelamento que fecha o diálogo e retorna false
+                                 TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context, false);
+                                  },
+                                  child: Text('Cancelar')
+                                  ),
+                                  // Botão de excluir que fecha o diálogo e retorna true
+                                  TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context, true);
+                                  },
+                                  child: Text('Excluir', style: TextStyle(color: Colors.red))
+                                  ),
+                                ],
+                              );
+                            }
+                          );
+
+                          if(confirmacao == true){
+                            await excluirComponente(id);
+                          }
+                        },
+                        icon: Icon(Icons.delete,
+                        color: Colors.red,
+                        )
+                        )
+                      ],
+                     )
                     ),
                   ]
                 );
-              }).toList()
+              }).toList(),
             ),
           ),
         ),

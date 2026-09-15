@@ -2,20 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class CadastroModelosPage extends StatefulWidget {
-  const CadastroModelosPage({super.key});
+class EditarModeloPage extends StatefulWidget {
+  // Variável para armazenar o modelo a ser editado
+  final Map<String, dynamic> modelo;
+
+
+  // Recebe o modelo como parâmetro
+  const EditarModeloPage({super.key, required this.modelo});
 
   @override
-  State<CadastroModelosPage> createState() => _CadastroModelosPageState();
+  State<EditarModeloPage> createState() => _EditarModeloPageState();
 }
 
-class _CadastroModelosPageState extends State<CadastroModelosPage> {
+class _EditarModeloPageState extends State<EditarModeloPage> {
+  // variáveis para armazenar os campos do formulário
   final formKey = GlobalKey<FormState>();
-  final nomeController = TextEditingController();
-  final anoController = TextEditingController();
-
-  String? categoria;
+  late final TextEditingController nomeController;
+  late final TextEditingController anoController;
   bool ativo = true;
+  String? categoria;
 
   final categorias = [
     'HATCH',
@@ -24,77 +29,96 @@ class _CadastroModelosPageState extends State<CadastroModelosPage> {
     'PICAPE',
   ];
 
-  // indica se os dados estão sendo enviados para a API
   bool salvando = false;
+  String? erro;
 
-  Future<void> salvar() async {
-    // Verifica se os campos do formulário são válidos
-    if (!formKey.currentState!.validate()) {
+  @override
+  void initState(){
+    super.initState();
+
+    // Inicializar os controladores de texto com os valores do modelo recebido
+    nomeController = TextEditingController(
+      text: widget.modelo['NOME']?.toString() ?? ''
+    );
+
+    anoController = TextEditingController(
+      text: widget.modelo['ANO_MODELO']?.toString() ?? ''
+    );
+
+    categoria = widget.modelo['CATEGORIA']?.toString();
+
+    // Se for igual a 1, então o checkbox fica marcado (ativo), caso contrário, fica desmarcado
+    ativo = widget.modelo['ATIVO'].toString() == '1';
+  }
+
+  // Criar a função que faz o envio (PUT) para a API
+  Future<void> editarModelo() async{
+    // validar o formuláio antes de enviar a API
+    if(!formKey.currentState!.validate()){
       return;
     }
 
-    // Montar o JSON com os dados para ser enviado para API
+    // Criar um JSON com os dados do modelo
     final dadosModelo = {
       'NOME': nomeController.text,
-      'CATEGORIA': categoria,
       'ANO_MODELO': anoController.text,
-      'ATIVO': ativo ? '1' :'0',
+      'ATIVO': ativo ? '1' : '0',
     };
 
-    // Indica que os dados estão sendo enviados para API
+    // Atualiza o estado da tela para indicar que está sendo salvo e tembém limpa a mensagem deerro se estiver sendo exibida
     setState(() {
       salvando = true;
+      erro = null;
     });
 
-    // Tenta enviar os dados para API
+    // Tentar enviar os dados para a API
     try{
-      // Fazer uma requisição para a API
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/modelos'),
-        // Cabeçalhos da requisição
+      // Capturar campo ID do registro para alteração
+      final id = widget.modelo['ID'];
+
+      // Faz a requisição PUT para a API
+      final response = await http.put(
+        Uri.parse('http://127.0.0.1:8000/api/modelos/$id'),
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         },
-        // Envia o JSON no corpo da requisição
-        body: jsonEncode(dadosModelo)
+        body:  jsonEncode(dadosModelo)
       );
 
-      // Verifica se o widget ainda está na árvore antes de usar o context
-      if (!mounted) return;
+      // Capturar a resposta da API
+      final resultado = response.body.isNotEmpty ?
+      jsonDecode(response.body) : null;
 
-      // Verificar se o cadastro foi realizado com sucesso
-      if(response.statusCode == 201){
-        // Mensagem de sucesso para o usuário
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Modelo cadastrado com sucesso!'),
-            backgroundColor: Colors.green, 
-          )
-        );
-      }else{
-        // caso a API retornar um erro, exibe a messagem de erro
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Erro! ${response.statusCode}: ${response.body}'
-              ),
-            backgroundColor: Colors.red, 
-          )
-        );
-      }
-    }catch(e){
-      if (!mounted) return;
-      // Menssagem de erro para o usuário
+      // Verifica se a atualização foi realizada com sucesso
+      if(response.statusCode == 200){
+      // Menssagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao enviar para API'),
-          backgroundColor: Colors.red,
+        SnackBar(content: Text(
+          resultado['message'] ?? 'Modelo atualizado!'
+          ),
+          backgroundColor: Colors.green,
+        )
+      );
+
+      // Volta para a página de relatórios modelo
+      Navigator.pop(context, true);
+    } else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(
+          'Erro ${response.statusCode}: ${response.body}'
+        )
         )
       );
     }
-    // Atualiza a tela para indicar que o envio terminou
-    finally{
-      if (mounted) {
+
+    }catch (e){
+      setState(() {
+        erro = 'Erro ao acessar a API: $e';
+        salvando = false;
+      });
+    }finally {
+      if(mounted){
         setState(() {
           salvando = false;
         });
@@ -102,7 +126,8 @@ class _CadastroModelosPageState extends State<CadastroModelosPage> {
     }
   }
 
-  @override
+  
+
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF1F4E5F);
     const backgroundColor = Color(0xFFF2F4F5);
@@ -241,13 +266,13 @@ class _CadastroModelosPageState extends State<CadastroModelosPage> {
                     SizedBox(
                       height: 52,
                       child: FilledButton.icon(
-                        onPressed: salvar,
+                        onPressed: salvando ? null : editarModelo,
                         style: FilledButton.styleFrom(
                           backgroundColor: primaryColor,
                         ),
                         icon: const Icon(Icons.save_outlined),
                         label: const Text(
-                          'SALVAR',
+                          'ATUALIZAR',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,

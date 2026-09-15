@@ -1,6 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class RelatorioGeralPage extends StatefulWidget {
   const RelatorioGeralPage({super.key});
@@ -10,34 +11,35 @@ class RelatorioGeralPage extends StatefulWidget {
 }
 
 class _RelatorioGeralPageState extends State<RelatorioGeralPage> {
-  // define constante da url de pesquisa da API
+  // Definir uma constante da URL de pesquisa da API
   static const baseUrl = 'http://127.0.0.1:8000/api';
 
-  // indica se os dados estão sendos carregados (loader)
+  // Indica se os dados estão sendo carregados (loader)
   bool carregando = true;
 
-  // armazena uma possivel mensagem de erro
+  // Armazena uma possível mensagem de erro
   String? erro;
 
-  // armazena as quantidades de cada rota pesquisada
+  // Armazena as quantidades de cada rota pesquisada
   int totalModelos = 0;
   int totalComponentes = 0;
-  int totalForncedores = 0;
+  int totalFornecedores = 0;
   int estoqueBaixo = 0;
 
-  // consulta os dados assim q a página é aberta
+  // Consulta os dados assim que a página pe aberta 
+  
   @override
   void initState(){
     super.initState();
     consultarDados();
   }
 
-  // criando função que faz a busca na API
+  // Criando  a função que faz a busca na API
   Future<List<dynamic>> consultar(String endpoint) async{
     // realizar uma requisição HTTP GET
     final response = await http.get(
       Uri.parse('$baseUrl/$endpoint'),
-      headers:{
+      headers: {
         'Accept': 'application/json'
       }
     );
@@ -53,31 +55,30 @@ class _RelatorioGeralPageState extends State<RelatorioGeralPage> {
     return resultado['data'] ?? [];
   }
 
-  // declara função q vai buscar todos os dados da API
-  Future<void> consultarDados() async{
+  // Declara a função que vai buscar todos os dados da API
+  Future<void> consultarDados() async {
     setState(() {
-      // Indicar q um consulta vai ser realizada
+      // indicar que uma consulta vai ser realizada 
       carregando = true;
       erro = null;
     });
-
     try{
-      // faz consulta na api
+      // Faz consulta na API
       final resultados = await Future.wait([
-        // faz consultas simultaneamente
+        // Faz consultas simultaeamente
         consultar('modelos'),
         consultar('componentes'),
         consultar('fornecedores')
       ]);
 
       setState(() {
-        // atualizar as quantidades nas variaves
+        // Atualizar as quantidades nas variáveis 
+        print(resultados);
         totalModelos = resultados[0].length;
-        totalModelos = resultados[1].length;
-        totalModelos = resultados[2].length;
-
-        carregando = false;
+        totalComponentes  = resultados[1].length;
+        totalFornecedores = resultados[2].length;
       });
+
     }catch(e){
       setState(() {
         erro = e.toString();
@@ -86,30 +87,33 @@ class _RelatorioGeralPageState extends State<RelatorioGeralPage> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
-    // criar a lista de indicadores para exibir no card
+    // Criar a lista de indicadores para exibir no card
     final List<Map<String, dynamic>> indicadores = [
       {
         'titulo': 'Modelos',
         'valor': totalModelos.toString(),
         'icone': Icons.directions_car
       },
+
       {
         'titulo': 'Componentes',
         'valor': totalComponentes.toString(),
         'icone': Icons.settings
       },
+
       {
         'titulo': 'Fornecedores',
-        'valor': totalForncedores.toString(),
+        'valor': totalFornecedores.toString(),
         'icone': Icons.local_shipping
       },
+
       {
         'titulo': 'Estoque Baixo',
         'valor': estoqueBaixo.toString(),
         'icone': Icons.warning
       },
-      
     ];
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F8),

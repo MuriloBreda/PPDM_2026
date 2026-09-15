@@ -2,30 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class CadastroFornecedoresPage extends StatefulWidget {
-  const CadastroFornecedoresPage({super.key});
+class EditarFornecedorPage extends StatefulWidget {
+  // Variável para armazenar o fornecedor a ser editado
+  final Map<String, dynamic> fornecedor;
+
+
+  // Recebe o fornecedor como parâmetro
+  const EditarFornecedorPage({super.key, required this.fornecedor});
 
   @override
-  State<CadastroFornecedoresPage> createState() => _CadastroFornecedoresPageState();
+  State<EditarFornecedorPage> createState() => _EditarFornecedorPageState();
 }
 
-class _CadastroFornecedoresPageState extends State<CadastroFornecedoresPage> {
+class _EditarFornecedorPageState extends State<EditarFornecedorPage> {
+  // variáveis para armazenar os campos do formulário
   final formKey = GlobalKey<FormState>();
-  final nomeController = TextEditingController();
-  final cnpjController = TextEditingController();
-  final cidadeController = TextEditingController();
-  final estadoController = TextEditingController();
+  late final TextEditingController nomeController;
+  late final TextEditingController cnpjController;
+  late final TextEditingController cidadeController;
+  late final TextEditingController estadoController;
 
-  // indica se os dados estão sendo enviados para a API
   bool salvando = false;
+  String? erro;
 
-  Future<void> salvar() async {
-    // Verifica se os campos do formulário são válidos
-    if (!formKey.currentState!.validate()) {
+  @override
+  void initState(){
+    super.initState();
+
+    // Inicializar os controladores de texto com os valores do fornecedor recebido
+    nomeController = TextEditingController(
+      text: widget.fornecedor['NOME']?.toString() ?? ''
+    );
+
+    cnpjController = TextEditingController(
+      text: widget.fornecedor['CNPJ']?.toString() ?? ''
+    );
+
+    cidadeController = TextEditingController(
+      text: widget.fornecedor['CIDADE']?.toString() ?? ''
+    );
+
+    estadoController = TextEditingController(
+      text: widget.fornecedor['ESTADO']?.toString() ?? ''
+    );
+  }
+
+  // Criar a função que faz o envio (PUT) para a API
+  Future<void> editarFornecedor() async{
+    // validar o formuláio antes de enviar a API
+    if(!formKey.currentState!.validate()){
       return;
     }
 
-    // Montar o JSON com os dados para ser enviado para API
+    // Criar um JSON com os dados do fornecedor
     final dadosFornecedor = {
       'NOME': nomeController.text,
       'CNPJ': cnpjController.text,
@@ -33,60 +62,60 @@ class _CadastroFornecedoresPageState extends State<CadastroFornecedoresPage> {
       'ESTADO': estadoController.text.toUpperCase(),
     };
 
-    // Indica que os dados estão sendo enviados para API
+    // Atualiza o estado da tela para indicar que está sendo salvo e tembém limpa a mensagem deerro se estiver sendo exibida
     setState(() {
       salvando = true;
+      erro = null;
     });
 
-    // Tenta enviar os dados para API
+    // Tentar enviar os dados para a API
     try{
-      // Fazer uma requisição para a API
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/fornecedores'),
-        // Cabeçalhos da requisição
+      // Capturar campo ID do registro para alteração
+      final id = widget.fornecedor['ID'];
+
+      // Faz a requisição PUT para a API
+      final response = await http.put(
+        Uri.parse('http://127.0.0.1:8000/api/fornecedores/$id'),
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         },
-        // Envia o JSON no corpo da requisição
-        body: jsonEncode(dadosFornecedor)
+        body:  jsonEncode(dadosFornecedor)
       );
 
-      // Se o widget saiu da tela durante o await, não mexe no context
-      if (!mounted) return;
+      // Capturar a resposta da API
+      final resultado = response.body.isNotEmpty ?
+      jsonDecode(response.body) : null;
 
-      // Verificar se o cadastro foi realizado com sucesso
-      if(response.statusCode == 201){
-        // Mensagem de sucesso para o usuário
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fornecedor cadastrado com sucesso!'),
-            backgroundColor: Colors.green,
-          )
-        );
-      }else{
-        // caso a API retornar um erro, exibe a messagem de erro
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Erro! ${response.statusCode}: ${response.body}'
-              ),
-            backgroundColor: Colors.red,
-          )
-        );
-      }
-    }catch(e){
-      if (!mounted) return;
-      // Menssagem de erro para o usuário
+      // Verifica se a atualização foi realizada com sucesso
+      if(response.statusCode == 200){
+      // Menssagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao enviar para API'),
-          backgroundColor: Colors.red,
+        SnackBar(content: Text(
+          resultado['message'] ?? 'Fornecedor atualizado!'
+          ),
+          backgroundColor: Colors.green,
+        )
+      );
+
+      // Volta para a página de relatórios fornecedor
+      Navigator.pop(context, true);
+    } else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(
+          'Erro ${response.statusCode}: ${response.body}'
+        )
         )
       );
     }
-    // Atualiza a tela para indicar que o envio terminou
-    finally{
-      if (mounted) {
+
+    }catch (e){
+      setState(() {
+        erro = 'Erro ao acessar a API: $e';
+        salvando = false;
+      });
+    }finally {
+      if(mounted){
         setState(() {
           salvando = false;
         });
@@ -94,7 +123,8 @@ class _CadastroFornecedoresPageState extends State<CadastroFornecedoresPage> {
     }
   }
 
-  @override
+
+
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF1F4E5F);
     const backgroundColor = Color(0xFFF2F4F5);
@@ -220,14 +250,14 @@ class _CadastroFornecedoresPageState extends State<CadastroFornecedoresPage> {
                     SizedBox(
                       height: 52,
                       child: FilledButton.icon(
-                        onPressed: salvando ? null : salvar,
+                        onPressed: salvando ? null : editarFornecedor,
                         style: FilledButton.styleFrom(
                           backgroundColor: primaryColor,
                         ),
                         icon: const Icon(Icons.save_outlined),
-                        label: Text(
-                          salvando ? 'SALVANDO...' : 'SALVAR',
-                          style: const TextStyle(
+                        label: const Text(
+                          'ATUALIZAR',
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
                           ),

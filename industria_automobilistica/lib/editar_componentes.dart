@@ -2,90 +2,114 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class CadastroComponentesPage extends StatefulWidget {
-  const CadastroComponentesPage({super.key});
+class EditarComponentePage extends StatefulWidget {
+  // Variável para armazenar o componente a ser editado
+  final Map<String, dynamic> componente;
+
+
+  // Recebe o componente como parâmetro
+  const EditarComponentePage({super.key, required this.componente});
 
   @override
-  State<CadastroComponentesPage> createState() => _CadastroComponentesPageState();
+  State<EditarComponentePage> createState() => _EditarComponentePageState();
 }
 
-class _CadastroComponentesPageState extends State<CadastroComponentesPage> {
+class _EditarComponentePageState extends State<EditarComponentePage> {
+  // variáveis para armazenar os campos do formulário
   final formKey = GlobalKey<FormState>();
-  final codigoController = TextEditingController();
-  final nomeController = TextEditingController();
-  final estoqueController = TextEditingController();
+  late final TextEditingController codigoController;
+  late final TextEditingController nomeController;
+  late final TextEditingController estoqueController;
 
-  // indica se os dados estão sendo enviados para a API
   bool salvando = false;
+  String? erro;
 
-  Future<void> salvar() async {
-    // Verifica se os campos do formulário são válidos
-    if (!formKey.currentState!.validate()) {
+  @override
+  void initState(){
+    super.initState();
+
+    // Inicializar os controladores de texto com os valores do componente recebido
+    codigoController = TextEditingController(
+      text: widget.componente['CODIGO']?.toString() ?? ''
+    );
+
+    nomeController = TextEditingController(
+      text: widget.componente['NOME']?.toString() ?? ''
+    );
+
+    estoqueController = TextEditingController(
+      text: widget.componente['ESTOQUE']?.toString() ?? ''
+    );
+  }
+
+  // Criar a função que faz o envio (PUT) para a API
+  Future<void> editarComponente() async{
+    // validar o formuláio antes de enviar a API
+    if(!formKey.currentState!.validate()){
       return;
     }
 
-    // Montar o JSON com os dados para ser enviado para API
+    // Criar um JSON com os dados do componente
     final dadosComponente = {
-      'CODIGO': codigoController.text.trim(),
-      'NOME': nomeController.text.trim(),
-      'ESTOQUE': int.parse(estoqueController.text.trim()),
+      'CODIGO': codigoController.text,
+      'NOME': nomeController.text,
+      'ESTOQUE': estoqueController.text,
     };
 
-    // Indica que os dados estão sendo enviados para API
+    // Atualiza o estado da tela para indicar que está sendo salvo e tembém limpa a mensagem deerro se estiver sendo exibida
     setState(() {
       salvando = true;
+      erro = null;
     });
 
-    // Tenta enviar os dados para API
+    // Tentar enviar os dados para a API
     try{
-      // Fazer uma requisição para a API
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/componentes'),
-        // Cabeçalhos da requisição
+      // Capturar campo ID do registro para alteração
+      final id = widget.componente['ID'];
+
+      // Faz a requisição PUT para a API
+      final response = await http.put(
+        Uri.parse('http://127.0.0.1:8000/api/componentes/$id'),
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        // Envia o JSON no corpo da requisição
-        body: jsonEncode(dadosComponente)
+        body:  jsonEncode(dadosComponente)
       );
 
-      // Se o widget saiu da tela durante a requisição, não faz mais nada
-      if (!mounted) return;
+      // Capturar a resposta da API
+      final resultado = response.body.isNotEmpty ?
+      jsonDecode(response.body) : null;
 
-      // Verificar se o cadastro foi realizado com sucesso
-      if(response.statusCode == 201){
-        // Mensagem de sucesso para o usuário
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Componente cadastrado com sucesso!'),
-            backgroundColor: Colors.green, 
-          )
-        );
-      }else{
-        // caso a API retornar um erro, exibe a messagem de erro
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Erro! ${response.statusCode}: ${response.body}'
-              ),
-            backgroundColor: Colors.red, 
-          )
-        );
-      }
-    }catch(e){
-      if (!mounted) return;
-      // Menssagem de erro para o usuário
+      // Verifica se a atualização foi realizada com sucesso
+      if(response.statusCode == 200){
+      // Menssagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao enviar para API'),
-          backgroundColor: Colors.red,
+        SnackBar(content: Text(
+          resultado['message'] ?? 'Componente atualizado!'
+          ),
+          backgroundColor: Colors.green,
+        )
+      );
+
+      // Volta para a página de relatórios componente
+      Navigator.pop(context, true);
+    } else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(
+          'Erro ${response.statusCode}: ${response.body}'
+        )
         )
       );
     }
-    // Atualiza a tela para indicar que o envio terminou
-    finally{
-      if (mounted) {
+
+    }catch (e){
+      setState(() {
+        erro = 'Erro ao acessar a API: $e';
+        salvando = false;
+      });
+    }finally {
+      if(mounted){
         setState(() {
           salvando = false;
         });
@@ -93,7 +117,8 @@ class _CadastroComponentesPageState extends State<CadastroComponentesPage> {
     }
   }
 
-  @override
+
+
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF1F4E5F);
     const backgroundColor = Color(0xFFF2F4F5);
@@ -203,13 +228,13 @@ class _CadastroComponentesPageState extends State<CadastroComponentesPage> {
                     SizedBox(
                       height: 52,
                       child: FilledButton.icon(
-                        onPressed: salvar,
+                        onPressed: salvando ? null : editarComponente,
                         style: FilledButton.styleFrom(
                           backgroundColor: primaryColor,
                         ),
                         icon: const Icon(Icons.save_outlined),
                         label: const Text(
-                          'SALVAR',
+                          'ATUALIZAR',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
